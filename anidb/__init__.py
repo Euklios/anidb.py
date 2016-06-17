@@ -1,11 +1,12 @@
 from __future__ import absolute_import
-from appdirs import *
+from appdirs import user_cache_dir
 from datetime import datetime, timedelta
 import os
+import requests
 import xml.etree.cElementTree as etree
 
-from .helper import download_file, AnidbHTTPAdapter
-from .models import *
+from anidb.helper import download_file, AnidbHTTPAdapter
+from anidb.models import Anime
 
 __author__ = "Dennis Lutter"
 __version__ = "1.0.0"

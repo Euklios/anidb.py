@@ -68,7 +68,7 @@ class Anime(object):
         self.synonyms = [t for t in self.titles if t.type == "synonym"]
         if xml.find("episodes") is not None:
             self.all_episodes = sorted([Episode(self, n) for n in xml.find("episodes")])
-            self.episodes = {e.number:e for e in self.all_episodes if e.type == 1}
+            self.episodes = {e.number: e for e in self.all_episodes if e.type == 1}
         if xml.find("picture") is not None:
             self.picture = Picture(self, xml.find("picture"))
         if xml.find("ratings") is not None:
@@ -88,7 +88,6 @@ class Anime(object):
             self.end_date = date_to_date(xml.find("enddate").text)
         if xml.find("description") is not None:
             self.description = xml.find("description").text
-
 
     @property
     def title(self):
@@ -128,7 +127,7 @@ class BaseAttribute(object):
         """
         for attr in attrs:
             value = self._xml.attrib.get(attr)
-            setattr(self, attr, value is not None and value == "true")
+            setattr(self, attr, value is not None and value.lower() == "true")
 
     def _texts(self, *attrs):
         """Set the text values of the given attributes.
@@ -162,12 +161,12 @@ class Tag(BaseAttribute):
 
     def __init__(self, anime, xml_node):
         super(Tag, self).__init__(anime, xml_node)
-        self._attributes('id', 'update')
+        self._attributes('id', 'update', 'weight')
         if self.update:
             self.update = date_to_date(self.update)
 
-        self._booleans('spoiler', 'localspoiler', 'globalspoiler')
-        self._texts('name', 'description', 'weight')
+        self._booleans('spoiler', 'localspoiler', 'globalspoiler', 'verified')
+        self._texts('name', 'description')
         self.count = int(self.weight) if self.weight else 0
         """The importance of this tag."""
 
@@ -200,6 +199,7 @@ class Episode(BaseAttribute):
         super(Episode, self).__init__(anime, xml_node)
         self._attributes('id')
         self._texts('airdate', 'length', 'epno')
+        self.airdate = date_to_date(self.airdate)
 
         self.titles = [Title(self, n) for n in self._xml.findall("title")]
         self.type = int(self._xml.find("epno").attrib["type"])
@@ -230,4 +230,3 @@ class Episode(BaseAttribute):
         if self.number < other.number:
             return -1
         return 1
-

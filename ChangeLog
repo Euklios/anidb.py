@@ -1,9 +1,9 @@
 CHANGES
 =======
 
-* updated xml tag definitions
+* Add tests
+* Updated xml tag definitions
 * future warning fix
 * more infos on animes ... default title is type=main
 * initial commit
 * Initial commit
-

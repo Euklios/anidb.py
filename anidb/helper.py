@@ -18,9 +18,12 @@ def download_file(local_filename, url):
     return local_filename
 
 
-def date_to_date(date_str):
+def parse_date(value):
+    if not value:
+        return None
+
     return date(
-        *map(int, date_str.split("-"))
+        *map(int, value.split("-"))
     )
 
 

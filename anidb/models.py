@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import xml.etree.ElementTree as ET
 
-from anidb.helper import date_to_date
+from anidb.helper import parse_date
 import anidb.compat as compat
 
 
@@ -86,9 +86,9 @@ class Anime(object):
         if xml.find("tags") is not None:
             self.tags = sorted([Tag(self, t) for t in xml.find("tags")])
         if xml.find("startdate") is not None:
-            self.start_date = date_to_date(xml.find("startdate").text)
+            self.start_date = parse_date(xml.find("startdate").text)
         if xml.find("enddate") is not None:
-            self.end_date = date_to_date(xml.find("enddate").text)
+            self.end_date = parse_date(xml.find("enddate").text)
         if xml.find("description") is not None:
             self.description = xml.find("description").text
 
@@ -166,7 +166,7 @@ class Tag(BaseAttribute):
         super(Tag, self).__init__(anime, xml_node)
         self._attributes('id', 'update', 'weight')
         if self.update:
-            self.update = date_to_date(self.update)
+            self.update = parse_date(self.update)
 
         self._booleans('spoiler', 'localspoiler', 'globalspoiler', 'verified')
         self._texts('name', 'description')
@@ -202,7 +202,7 @@ class Episode(BaseAttribute):
         super(Episode, self).__init__(anime, xml_node)
         self._attributes('id')
         self._texts('airdate', 'length', 'epno')
-        self.airdate = date_to_date(self.airdate)
+        self.airdate = parse_date(self.airdate)
 
         self.titles = [Title(self, n) for n in self._xml.findall("title")]
         self.type = int(self._xml.find("epno").attrib["type"])

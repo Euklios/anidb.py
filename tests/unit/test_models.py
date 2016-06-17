@@ -165,7 +165,9 @@ def test_episode_titles():
     assert str(ep.title) == 'The Two Apes'
 
     titles = [Title(gintama, ET.fromstring(title)) for title in title_xmls]
-    lang_titles = {title.lang: title for title in titles}
+    lang_titles = dict([
+        (title.lang, title) for title in titles
+    ])
 
     for title in ep.titles:
         assert str(lang_titles[title.lang]) == str(title)

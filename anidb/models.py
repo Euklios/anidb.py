@@ -1,8 +1,8 @@
 from __future__ import absolute_import
-import requests
 import xml.etree.ElementTree as ET
 
-from .helper import date_to_date
+from anidb.helper import date_to_date
+import anidb.compat as compat
 
 
 class Anime(object):
@@ -32,7 +32,7 @@ class Anime(object):
             self.load()
 
     def __repr__(self):
-        return "<Anime:{} loaded:{}>".format(self.id, self.loaded)
+        return "<Anime id: %s, loaded:%s>" % (self.id, self.loaded)
 
     @property
     def loaded(self):
@@ -68,7 +68,10 @@ class Anime(object):
         self.synonyms = [t for t in self.titles if t.type == "synonym"]
         if xml.find("episodes") is not None:
             self.all_episodes = sorted([Episode(self, n) for n in xml.find("episodes")])
-            self.episodes = {e.number: e for e in self.all_episodes if e.type == 1}
+            self.episodes = dict([
+                (e.number, e) for e in self.all_episodes
+                if e.type == 1
+            ])
         if xml.find("picture") is not None:
             self.picture = Picture(self, xml.find("picture"))
         if xml.find("ratings") is not None:
@@ -142,7 +145,7 @@ class BaseAttribute(object):
         return self._xml.text
 
     def __repr__(self):
-        return u"<{}: {}>".format(
+        return compat.u("<%s: %s>") % (
             self.__class__.__name__,
             unicode(self)
         )
@@ -190,7 +193,7 @@ class Picture(BaseAttribute):
 
     @property
     def url(self):
-        return "http://img7.anidb.net/pics/anime/{}".format(self._xml.text)
+        return "http://img7.anidb.net/pics/anime/%s" % self._xml.text
 
 
 class Episode(BaseAttribute):
@@ -219,7 +222,7 @@ class Episode(BaseAttribute):
                 return t
 
     def __str__(self):
-        return u"{}: {}".format(self.number, self.title)
+        return compat.u("%s: %s") % (self.number, self.title)
 
     def __cmp__(self, other):
         if self.type > other.type:

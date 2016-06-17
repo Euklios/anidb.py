@@ -7,6 +7,7 @@ import xml.etree.cElementTree as etree
 
 from anidb.helper import download_file, AnidbHTTPAdapter
 from anidb.models import Anime
+import anidb.compat as compat
 
 __author__ = "Dennis Lutter"
 __version__ = "1.0.0"
@@ -72,7 +73,7 @@ class Anidb(object):
 
     def _build_session(self, cache, cache_expire_after, user_agent):
         # Retrieve cache directory
-        if isinstance(cache, (str, unicode)):
+        if isinstance(cache, compat.string_types):
             cache_dir = cache
         else:
             cache_dir = user_cache_dir('anidbpy')

@@ -45,14 +45,17 @@ class Anime(object):
         http://api.anidb.net:9001/httpapi?request=anime&client={str}&clientver={int}&protover=1&aid={int}
         """
         params = {
-            "request": "anime",
-            "client": "adbahttp",
-            "clientver": 100,
+            "client": self.anidb.client_name,
+            "clientver": self.anidb.client_version,
+
             "protover": 1,
+            "request": "anime",
             "aid": self.id
         }
-        r = requests.get("http://api.anidb.net:9001/httpapi", params=params)
-        self._xml = ET.fromstring(r.text.encode("UTF-8"))
+
+        response = self.anidb.session.get("http://api.anidb.net:9001/httpapi", params=params)
+
+        self._xml = ET.fromstring(response.text.encode("UTF-8"))
         self.fill_from_xml(self._xml)
         self._loaded = True
 

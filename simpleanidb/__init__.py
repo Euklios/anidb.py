@@ -1,48 +1,51 @@
 from __future__ import absolute_import
+from appdirs import *
+from datetime import datetime, timedelta
 import os
 import xml.etree.cElementTree as etree
-from datetime import datetime, timedelta
 
-from appdirs import *
-
-from .helper import download_file
+from .helper import download_file, AnidbHTTPAdapter
 from .models import *
 
-__version__ = "0.1.0"
 __author__ = "Dennis Lutter"
+__version__ = "1.0.0"
+__version_code__ = 100
 
 ANIME_LIST_URL = "http://anidb.net/api/anime-titles.xml.gz"
 
+DEFAULT_CACHE_TTL = 86400  # 24 hours (cached responses are refreshed every 24 hours)
+DEFAULT_LANGUAGE = 'en'
+DEFAULT_RATE_LIMIT = 2     # 2 seconds (requests are rate limited to 1 every 2 seconds)
+DEFAULT_USER_AGENT = "anidb.py (%s)" % __version__
+
+
 class Anidb(object):
+    client_name = "anidbpy"
+    client_version = __version_code__
 
-    def __init__(self, cache_dir=None, auto_download=True, lang=None):
-        if not cache_dir:
-            self._cache_dir = user_cache_dir("simpleanidb")
-            if not os.path.isdir(self._cache_dir):
-                os.mkdir(self._cache_dir)
-        else:
-            self._cache_dir = cache_dir
-        if not os.path.isdir(self._cache_dir):
-            raise ValueError("'%s' does not exist" % self._cache_dir)
-        elif not os.access(self._cache_dir, os.W_OK):
-            raise IOError("'%s' is not writable" % self._cache_dir)
+    def __init__(self, auto_download=True, language=DEFAULT_LANGUAGE, cache=True,
+                 cache_expire_after=DEFAULT_CACHE_TTL, rate_limit=DEFAULT_RATE_LIMIT,
+                 user_agent=DEFAULT_USER_AGENT):
 
-        self.anime_list_path = os.path.join(
-            self._cache_dir, "anime-titles.xml.gz")
         self.auto_download = auto_download
+        self.lang = language
+        self.rate_limit = rate_limit
+
+        self.session = None
         self._xml = None
-        self.lang = lang
-        if not lang:
-            self.lang = "en"
+
+        # Initialize cache
+        self._cache_path = self._build_session(cache, cache_expire_after, user_agent)
+        self._anime_list_path = os.path.join(self._cache_path, "anime-titles.xml.gz")
 
     def search(self, term):
         if not self._xml:
             try:
-                self._xml = self._read_file(self.anime_list_path)
+                self._xml = self._read_file(self._anime_list_path)
             except IOError:
                 if self.auto_download:
                     self.download_anime_list()
-                    self._xml = self._read_file(self.anime_list_path)
+                    self._xml = self._read_file(self._anime_list_path)
                 else:
                     raise
 
@@ -58,14 +61,50 @@ class Anidb(object):
     def anime(self, aid):
         return Anime(self, aid)
 
-    def _read_file(self, path):
-        f = open(path, 'rb')
-        return etree.ElementTree(file=f)
-
     def download_anime_list(self, force=False):
-        if not force and os.path.exists(self.anime_list_path):
+        if not force and os.path.exists(self._anime_list_path):
             modified_date = datetime.fromtimestamp(
-                os.path.getmtime(self.anime_list_path))
+                os.path.getmtime(self._anime_list_path))
             if modified_date + timedelta(1) > datetime.now():
                 return False
-        return download_file(self.anime_list_path, ANIME_LIST_URL)
+        return download_file(self._anime_list_path, ANIME_LIST_URL)
+
+    def _build_session(self, cache, cache_expire_after, user_agent):
+        # Retrieve cache directory
+        if isinstance(cache, (str, unicode)):
+            cache_dir = cache
+        else:
+            cache_dir = user_cache_dir('simpleanidb')
+
+        # Ensure cache directory exists
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+
+        if cache:
+            # Construct cached requests session
+            import requests_cache
+
+            self.session = requests_cache.CachedSession(
+                expire_after=cache_expire_after,
+                backend='sqlite',
+                cache_name=os.path.join(cache_dir, 'simpleanidb'),
+            )
+        else:
+            # Construct simple requests session
+            self.session = requests.Session()
+
+        # Set user agent
+        self.session.headers.update({
+            'User-Agent': user_agent
+        })
+
+        # Setup request rate limit
+        self.session.mount('http://', AnidbHTTPAdapter(self))
+        self.session.mount('https://', AnidbHTTPAdapter(self))
+
+        return cache_dir
+
+    @staticmethod
+    def _read_file(path):
+        f = open(path, 'rb')
+        return etree.ElementTree(file=f)

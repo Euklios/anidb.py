@@ -74,7 +74,7 @@ class Anidb(object):
         if isinstance(cache, (str, unicode)):
             cache_dir = cache
         else:
-            cache_dir = user_cache_dir('simpleanidb')
+            cache_dir = user_cache_dir('anidbpy')
 
         # Ensure cache directory exists
         if not os.path.exists(cache_dir):
@@ -87,7 +87,7 @@ class Anidb(object):
             self.session = requests_cache.CachedSession(
                 expire_after=cache_expire_after,
                 backend='sqlite',
-                cache_name=os.path.join(cache_dir, 'simpleanidb'),
+                cache_name=os.path.join(cache_dir, 'anidbpy'),
             )
         else:
             # Construct simple requests session

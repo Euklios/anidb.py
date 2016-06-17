@@ -9,7 +9,7 @@ from anidb.helper import download_file, AnidbHTTPAdapter
 from anidb.models import Anime
 import anidb.compat as compat
 
-__author__ = "Dennis Lutter"
+__author__ = "Dean Gardiner"
 __version__ = "1.0.0"
 __version_code__ = 100
 

@@ -22,9 +22,13 @@ def parse_date(value):
     if not value:
         return None
 
-    return date(
-        *map(int, value.split("-"))
-    )
+    try:
+        return date(
+            *map(int, value.split("-"))
+        )
+    except TypeError:
+        log.warn('Unable to parse date: %r', value)
+        return None
 
 
 class AnidbHTTPAdapter(HTTPAdapter):
